@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://pardistaghavi.github.io/cast-website/sitemap.xml
