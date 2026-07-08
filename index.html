@@ -496,8 +496,8 @@
     (function () {
       try {
         var saved = localStorage.getItem('cast-theme');
-        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        var theme = saved || (prefersDark ? 'dark' : 'light');
+        // First-time visitors default to dark; returning visitors keep their saved choice.
+        var theme = saved || 'dark';
         document.documentElement.setAttribute('data-theme', theme);
       } catch (e) { /* localStorage may be blocked */ }
     })();

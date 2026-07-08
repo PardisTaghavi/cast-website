@@ -36,21 +36,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const root = document.documentElement;
   if (toggle) {
     toggle.addEventListener('click', function () {
-      const current = root.getAttribute('data-theme') || 'light';
+      const current = root.getAttribute('data-theme') || 'dark';
       const next = current === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', next);
       try { localStorage.setItem('cast-theme', next); } catch (e) { /* ignore */ }
-    });
-  }
-
-  // ===== React to system theme changes (only when user hasn't set a preference) =====
-  const mql = window.matchMedia('(prefers-color-scheme: dark)');
-  if (mql && typeof mql.addEventListener === 'function') {
-    mql.addEventListener('change', function (e) {
-      try {
-        if (localStorage.getItem('cast-theme')) return;  // user has chosen
-      } catch (err) {}
-      root.setAttribute('data-theme', e.matches ? 'dark' : 'light');
     });
   }
 });
