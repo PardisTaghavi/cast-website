@@ -1,0 +1,11 @@
+# Static-site cache
+.nojekyll
+.DS_Store
+Thumbs.db
+
+# Editor / OS
+*.swp
+*.swo
+*~
+.vscode/
+.idea/

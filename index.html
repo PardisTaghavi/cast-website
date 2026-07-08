@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="CAST: Training a Student Expert via Semi-Supervised Foundation Model Distillation. A three-stage pipeline for compressing large vision foundation models into compact students using limited labeled and abundant unlabeled data, with an instance-aware pixel-wise contrastive loss for instance segmentation.">
+  <meta property="og:title" content="CAST — Semi-Supervised Foundation Model Distillation (CVPRW 2026)">
+  <meta property="og:description" content="An 11× smaller student that surpasses the adapted vision-foundation-model teacher on Cityscapes and ADE20K.">
+  <meta property="og:url" content="https://cast-website.github.io/">
+  <meta property="og:image" content="static/images/cast_og_banner.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <meta name="twitter:title" content="CAST — Semi-Supervised Foundation Model Distillation">
+  <meta name="twitter:description" content="An 11× smaller student that surpasses the adapted VFM teacher on Cityscapes and ADE20K. CVPRW 2026.">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <meta name="keywords" content="CAST, knowledge distillation, semi-supervised learning, vision foundation model, instance segmentation, contrastive learning, Cityscapes, ADE20K, CVPR 2026 workshop">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CAST — Semi-Supervised Foundation Model Distillation (CVPRW 2026)</title>
+  <link rel="icon" type="image/svg+xml" href="static/images/cast_favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <style>
+    /* ====== NVIDIA brand palette (official) ====== */
+    /* Used as raw tokens; semantic tokens below */
+    :root {
+      --nv-green:      #76B900;
+      --nv-green-dim:  #5A8F00;
+      --nv-teal:       #008564;
+      --nv-purple:     #5D1682;
+      --nv-magenta:    #890C58;
+      --nv-yellow:     #FAC200;
+      --nv-gray-dark:  #5E5E5E;
+      --nv-gray-light: #CDCDCD;
+      --nv-orange:     #FFA500;
+    }
+
+    /* ====== Semantic tokens — LIGHT (default) ====== */
+    :root,
+    [data-theme="light"] {
+      --color-bg:               #ffffff;
+      --color-bg-alt:           #f6faee;
+      --color-bg-soft:          #fafafa;
+      --color-surface:          #ffffff;
+      --color-surface-hover:    #f0f5e8;
+      --color-text:             #1a1a1a;
+      --color-text-muted:       #555;
+      --color-text-dim:         #888;
+      --color-border:           #e6e6e6;
+      --color-border-strong:    rgba(0, 0, 0, 0.12);
+      --color-shadow:           rgba(0, 0, 0, 0.08);
+
+      --color-link:             var(--nv-green);
+      --color-link-hover:       var(--nv-green-dim);
+      --color-primary:          var(--nv-green);
+      --color-primary-2:        var(--nv-green-dim);
+      --color-primary-pale:     #E8F5D8;
+      --color-on-primary:       #ffffff;
+
+      --color-code-bg:          #f0f5e8;
+      --color-equation-bg:      #f6faee;
+      --color-equation-border:  var(--nv-green);
+
+      --color-table-header-bg:  var(--nv-green);
+      --color-table-header-bg-2: var(--nv-green-dim);
+      --color-table-row-hover:  #f0f5e8;
+
+      --color-card-bg-from:     #f6faee;
+      --color-card-bg-to:       #e8f5d8;
+
+      --color-nav-bg:           rgba(255, 255, 255, 0.92);
+      --color-nav-text:         #555;
+      --color-nav-divider:      rgba(0, 0, 0, 0.1);
+      --color-nav-hover-bg:     rgba(118, 185, 0, 0.08);
+      --color-nav-active-bg:    rgba(118, 185, 0, 0.12);
+
+      --color-highlight-best:   #d6e8ff;
+      --color-highlight-second: #ecf3ff;
+      --color-group-row-bg:     #f0f5e8;
+      --color-group-row-text:   var(--nv-green-dim);
+
+      --color-stage-card-bg:    #ffffff;
+      --color-stage-card-border: #e6e6e6;
+
+      --color-figure-caption:   #555;
+      --color-venue-badge-bg:   var(--nv-green);
+      --color-venue-badge-text: #ffffff;
+    }
+
+    /* ====== Semantic tokens — DARK ====== */
+    [data-theme="dark"] {
+      --color-bg:               #0d1117;
+      --color-bg-alt:           #161b22;
+      --color-bg-soft:          #1c2128;
+      --color-surface:          #161b22;
+      --color-surface-hover:    #1c2128;
+      --color-text:             #f0f3f6;
+      --color-text-muted:       #b8c0c8;
+      --color-text-dim:         #8b949e;
+      --color-border:           #30363d;
+      --color-border-strong:    rgba(255, 255, 255, 0.1);
+      --color-shadow:           rgba(0, 0, 0, 0.4);
+
+      --color-link:             #9FE026;
+      --color-link-hover:       #B5EE3F;
+      --color-primary:          #9FE026;
+      --color-primary-2:        #76B900;
+      --color-primary-pale:     #1c2a10;
+      --color-on-primary:       #ffffff;
+
+      --color-code-bg:          #1c2128;
+      --color-equation-bg:      #161b22;
+      --color-equation-border:  #9FE026;
+
+      --color-table-header-bg:  var(--nv-green-dim);
+      --color-table-header-bg-2: var(--nv-green);
+      --color-table-row-hover:  #1c2128;
+
+      --color-card-bg-from:     #161b22;
+      --color-card-bg-to:       #1c2128;
+
+      --color-nav-bg:           rgba(13, 17, 23, 0.92);
+      --color-nav-text:         #c9d1d9;
+      --color-nav-divider:      rgba(255, 255, 255, 0.08);
+      --color-nav-hover-bg:     rgba(159, 224, 38, 0.12);
+      --color-nav-active-bg:    rgba(159, 224, 38, 0.18);
+
+      --color-highlight-best:   #1e3a6e;
+      --color-highlight-second: #142847;
+      --color-group-row-bg:     #1c2128;
+      --color-group-row-text:   #9FE026;
+
+      --color-stage-card-bg:    #161b22;
+      --color-stage-card-border: #30363d;
+
+      --color-figure-caption:   #b8c0c8;
+      --color-venue-badge-bg:   var(--nv-green-dim);
+      --color-venue-badge-text: #ffffff;
+    }
+
+    /* Smooth transitions on theme change */
+    html { transition: background-color 0.25s ease; }
+    body,
+    .top-nav, .stat-card, .stage-card, .results-table,
+    .eq-block, pre, code, button, .button, .pub-venue-badge {
+      transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    a { color: var(--color-link); }
+    a:hover { color: var(--color-link-hover); }
+    h1, h2, h3, h4, h5, h6 { color: var(--color-text); font-family: var(--font-display); letter-spacing: -0.015em; }
+    .title, .subtitle { color: var(--color-text); font-family: var(--font-display); letter-spacing: -0.015em; }
+
+    /* ----- Top nav ----- */
+    .top-nav {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      z-index: 999;
+      background: var(--color-nav-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--color-border-strong);
+      box-shadow: 0 2px 8px var(--color-shadow);
+      padding: 0.6rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: stretch;
+    }
+    .top-nav a {
+      flex: 1;
+      color: var(--color-nav-text);
+      font-weight: 500;
+      font-size: 1.05rem;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0;
+      transition: color 0.2s, background 0.2s;
+      white-space: nowrap;
+      border-right: 1px solid var(--color-nav-divider);
+    }
+    .top-nav a:last-child { border-right: none; }
+    .top-nav a:hover { color: var(--color-link); background: var(--color-nav-hover-bg); }
+    .top-nav a.active { color: var(--color-link); font-weight: 700; background: var(--color-nav-active-bg); }
+    body { padding-top: 2.8rem; }
+
+    /* Theme toggle button */
+    .theme-toggle {
+      flex: 0 0 auto;
+      padding: 0.3rem 0.8rem;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      border-left: 1px solid var(--color-nav-divider);
+      color: var(--color-nav-text);
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s, background 0.2s, transform 0.3s;
+    }
+    .theme-toggle:hover { color: var(--color-link); background: var(--color-nav-hover-bg); }
+    .theme-toggle:active { transform: scale(0.92); }
+    .theme-toggle .fa-sun { display: none; }
+    .theme-toggle .fa-moon { display: inline; }
+    [data-theme="dark"] .theme-toggle .fa-sun { display: inline; }
+    [data-theme="dark"] .theme-toggle .fa-moon { display: none; }
+
+    @media screen and (max-width: 768px) {
+      .top-nav a { font-size: 0.78rem; gap: 0.2rem; }
+      .theme-toggle { padding: 0.3rem 0.5rem; font-size: 0.95rem; }
+    }
+
+    /* ----- CAST color scheme (NVIDIA green) ----- */
+    .publication-title { color: var(--color-primary); }
+    .button.is-dark {
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .button.is-dark:hover {
+      background-color: var(--color-primary-2);
+      border-color: var(--color-primary-2);
+      color: var(--color-on-primary);
+    }
+    .link-block a.external-link.button {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .link-block a.external-link.button:hover {
+      background: var(--color-primary-2);
+      color: var(--color-on-primary);
+    }
+
+    .hero.is-cast {
+      background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-bg-alt) 100%);
+    }
+    .pub-venue-badge {
+      display: inline-block;
+      background: var(--color-venue-badge-bg);
+      color: var(--color-venue-badge-text);
+      font-weight: 700;
+      padding: 0.4rem 1rem;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+      margin-top: 0.4rem;
+    }
+    .pub-venue-badge .dot { opacity: 0.6; padding: 0 0.4rem; }
+
+    /* ----- Image modal ----- */
+    .image-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      cursor: pointer;
+    }
+    .image-modal-content {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 92%;
+      max-height: 92%;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .image-modal-close {
+      position: absolute;
+      top: 20px; right: 35px;
+      color: #fff;
+      font-size: 40px; font-weight: bold;
+      cursor: pointer;
+      z-index: 1001;
+      transition: color 0.3s;
+    }
+    .image-modal-close:hover { color: var(--nv-green); }
+    .clickable-image { cursor: zoom-in; transition: opacity 0.3s; }
+    .clickable-image:hover { opacity: 0.88; }
+    .image-modal-caption {
+      position: absolute;
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      color: #fff;
+      text-align: center;
+      font-size: 16px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px 20px;
+      border-radius: 4px;
+      max-width: 80%;
+    }
+    @media (max-width: 768px) {
+      .image-modal-content { max-width: 95%; max-height: 85%; }
+      .image-modal-close { top: 10px; right: 15px; font-size: 30px; }
+    }
+
+    /* ----- Result table styling ----- */
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      margin: 1rem 0;
+    }
+    .results-table th, .results-table td {
+      padding: 0.7rem 0.9rem;
+      border-bottom: 1px solid var(--color-border);
+      text-align: center;
+    }
+    .results-table thead th {
+      background: var(--color-table-header-bg);
+      color: var(--color-on-primary) !important;
+      font-weight: 700;
+      font-size: 1rem;
+      border-bottom: 2px solid var(--color-table-header-bg);
+      letter-spacing: 0.3px;
+    }
+    .results-table thead th[colspan] {
+      background: var(--color-table-header-bg-2);
+      color: var(--color-on-primary) !important;
+    }
+    .results-table tbody tr:hover { background: var(--color-table-row-hover); }
+    .results-table caption {
+      caption-side: top;
+      text-align: left;
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      padding-bottom: 0.6rem;
+      font-weight: 500;
+    }
+    .results-table .row-label { text-align: left; font-weight: 500; color: var(--color-text); }
+    .results-table .best { background: var(--color-highlight-best); font-weight: 700; color: var(--color-text); }
+    .results-table .second { background: var(--color-highlight-second); color: var(--color-text); }
+    .results-table .group-row td {
+      background: var(--color-group-row-bg);
+      font-style: italic;
+      color: var(--color-group-row-text);
+      font-weight: 600;
+    }
+
+    /* ----- Headline stat cards ----- */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .stat-card {
+      background: linear-gradient(135deg, var(--color-card-bg-from) 0%, var(--color-card-bg-to) 100%);
+      border-left: 4px solid var(--color-primary);
+      border-radius: 8px;
+      padding: 1.2rem 1rem;
+      text-align: center;
+    }
+    .stat-card .stat-value {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--color-primary);
+      line-height: 1;
+    }
+    .stat-card .stat-label {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      margin-top: 0.3rem;
+    }
+    @media (max-width: 768px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ----- Pipeline stage cards ----- */
+    .stage-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .stage-card {
+      background: var(--color-stage-card-bg);
+      border: 1px solid var(--color-stage-card-border);
+      border-top: 4px solid var(--color-primary);
+      border-radius: 6px;
+      padding: 1.2rem;
+    }
+    .stage-card h4 {
+      color: var(--color-primary);
+      font-weight: 700;
+      margin: 0 0 0.4rem 0;
+    }
+    .stage-card .stage-num {
+      display: inline-block;
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      font-weight: 800;
+      width: 1.6rem; height: 1.6rem;
+      line-height: 1.6rem;
+      text-align: center;
+      border-radius: 50%;
+      font-size: 0.9rem;
+      margin-right: 0.4rem;
+    }
+    .stage-card p { font-size: 0.92rem; color: var(--color-text); margin: 0.2rem 0 0 0; }
+    @media (max-width: 768px) {
+      .stage-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ----- Equation block ----- */
+    .eq-block {
+      background: var(--color-equation-bg);
+      border-left: 4px solid var(--color-equation-border);
+      padding: 0.8rem 1.2rem;
+      margin: 0.8rem 0;
+      border-radius: 0 4px 4px 0;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      letter-spacing: -0.005em;
+      overflow-x: auto;
+      color: var(--color-text);
+    }
+
+    /* Bulma overrides for theme */
+    .hero.is-light { background-color: var(--color-bg-alt) !important; }
+    .hero .title, .hero .subtitle { color: var(--color-text); font-family: var(--font-display); letter-spacing: -0.02em; }
+    .hero { background-color: var(--color-bg) !important; }
+
+    /* Make sure ALL text content picks up themed colors */
+    body, .content, .content p, .content li, .content td,
+    .content h1, .content h2, .content h3, .content h4, .content h5, .content h6 {
+      color: var(--color-text);
+    }
+    .content strong, .content b { color: var(--color-text); font-weight: 700; }
+    .content em { color: var(--color-text); font-style: italic; }
+    .content a { color: var(--color-link); }
+    .content a:hover { color: var(--color-link-hover); }
+
+    code {
+      background: var(--color-code-bg);
+      color: var(--color-primary-2);
+      padding: 0 0.25rem;
+      border-radius: 3px;
+      font-size: 0.9em;
+      font-family: var(--font-mono);
+    }
+    pre {
+      background: var(--color-code-bg);
+      color: var(--color-text);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      border-left: 4px solid var(--color-primary);
+      font-family: var(--font-mono);
+    }
+    pre code { background: transparent; color: inherit; padding: 0; }
+    .publication-authors a { color: var(--color-link); font-weight: 500; }
+    .content figure { margin: 1.5rem 0; }
+    .content figure figcaption { color: var(--color-figure-caption); }
+
+    /* Footer — keep it from staying light in dark mode */
+    .footer {
+      background-color: var(--color-bg-alt) !important;
+      color: var(--color-text-muted) !important;
+      padding: 2.5rem 1.5rem !important;
+      border-top: 1px solid var(--color-border);
+    }
+    .footer a { color: var(--color-link); }
+    .footer a:hover { color: var(--color-link-hover); }
+    .footer .content { color: var(--color-text-muted); }
+    .footer .content p { color: var(--color-text-muted); }
+  </style>
+
+  <!-- Theme bootstrap (runs before paint to avoid flash) -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('cast-theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = saved || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) { /* localStorage may be blocked */ }
+    })();
+  </script>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script src="static/js/bulma-carousel.min.js"></script>
+  <script src="static/js/bulma-slider.min.js"></script>
+  <script src="static/js/index.js"></script>
+</head>
+
+<body>
+
+  <!-- ============== TOP NAV ============== -->
+  <nav class="top-nav">
+    <a href="#top"><i class="fas fa-home"></i> Home</a>
+    <a href="#tldr">TL;DR</a>
+    <a href="#overview">Overview</a>
+    <a href="#method">Method</a>
+    <a href="#results">Results</a>
+    <a href="#ablations">Ablations</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#bibtex">BibTeX</a>
+    <button class="theme-toggle" id="theme-toggle"
+            aria-label="Toggle dark mode" title="Toggle dark mode">
+      <i class="fas fa-moon" aria-hidden="true"></i>
+      <i class="fas fa-sun"  aria-hidden="true"></i>
+    </button>
+  </nav>
+
+  <!-- ============== HERO ============== -->
+  <section class="hero" id="top">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+
+            <figure class="image is-inline-block" style="width: 70%; max-width: 540px; margin-bottom: 1.2rem;">
+              <img src="assets/cast_logo.svg" alt="CAST logo">
+            </figure>
+
+            <h1 class="title is-2 publication-title">
+              CAST: Training a Student Expert via<br>
+              Semi-Supervised Foundation Model Distillation
+            </h1>
+
+            <div class="is-size-5 publication-authors" style="margin-top: 0.8rem;">
+              <span class="author-block"><a href="#" target="_blank">Pardis Taghavi</a><sup>1</sup>,</span>
+              <span class="author-block"><a href="#" target="_blank">Tian Liu</a><sup>1</sup>,</span>
+              <span class="author-block"><a href="#" target="_blank">Renjie Li</a><sup>1</sup>,</span>
+              <span class="author-block"><a href="#" target="_blank">Reza Langari</a><sup>1</sup>,</span>
+              <span class="author-block"><a href="#" target="_blank">Zhengzhong Tu</a><sup>1*</sup></span>
+            </div>
+
+            <div class="is-size-5 publication-authors" style="margin-top: 0.4rem;">
+              <span class="author-block"><sup>1</sup> Texas A&amp;M University</span>
+              <br>
+              <span class="eql-cntrb"><small><sup>*</sup>Corresponding author</small></span>
+              <br>
+              <span class="pub-venue-badge">CVPR 2026 Workshop<span class="dot">·</span>Open Access</span>
+            </div>
+
+            <div class="column has-text-centered" style="margin-top: 1.2rem;">
+              <div class="publication-links">
+
+                <span class="link-block">
+                  <a href="assets/Taghavi_CAST_CVPRW2026.pdf" target="_blank"
+                     class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                    <span>Paper</span>
+                  </a>
+                </span>
+
+                <span class="link-block">
+                  <a href="https://arxiv.org/" target="_blank"
+                     class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="ai ai-arxiv"></i></span>
+                    <span>arXiv</span>
+                  </a>
+                </span>
+
+                <span class="link-block">
+                  <a href="#" target="_blank"
+                     class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fab fa-github"></i></span>
+                    <span>Code (coming)</span>
+                  </a>
+                </span>
+
+                <span class="link-block">
+                  <a href="#bibtex"
+                     class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-quote-right"></i></span>
+                    <span>BibTeX</span>
+                  </a>
+                </span>
+
+                <br>
+
+                <span class="link-block">
+                  <a href="mailto:ptgh@tamu.edu"
+                     class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-envelope"></i></span>
+                    <span>Contact</span>
+                  </a>
+                </span>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== HEADLINE STATS ============== -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered" style="color: var(--color-primary);">Headline Results</h2>
+      <p class="subtitle is-6 has-text-centered" style="color: #444;">
+        A <strong>~11&times; smaller</strong> student that <strong>surpasses its adapted VFM teacher</strong> on instance segmentation.
+      </p>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value">+11.9</div>
+          <div class="stat-label">maskAP over zero-shot VFM teacher<br><em>Cityscapes</em></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">+8.6</div>
+          <div class="stat-label">maskAP over zero-shot VFM teacher<br><em>ADE20K</em></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">+3.4</div>
+          <div class="stat-label">maskAP over adapted teacher<br><em>Cityscapes (10% labels)</em></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">11&times;</div>
+          <div class="stat-label">smaller than the 568M-parameter<br>composite VFM teacher</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== TL;DR ============== -->
+  <section class="section hero" id="tldr">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: var(--color-primary);">TL;DR</h2>
+          <div class="content has-text-justified" style="font-size: 1.05rem;">
+            <p>
+              <strong>CAST</strong> is a three-stage <strong>semi-supervised knowledge distillation</strong> framework
+              that compresses large pre-trained <strong>vision foundation models</strong> (Grounding-DINO + SAM2,
+              568M params) into a compact <strong>52M-parameter student expert</strong> (DINOv2-S + DPT-S + Mask2Former-style
+              decoder) for <strong>instance segmentation</strong>.
+            </p>
+            <p>
+              The pipeline runs <em>Teacher Adaptation &rarr; Knowledge Transfer &rarr; Student Refinement</em>,
+              with an <strong>instance-aware pixel-wise contrastive loss</strong> that fuses mask and class predictions
+              to mine hard negatives &mdash; enforcing sharp inter-instance margins even when only 5&ndash;10% of
+              pixels are labeled.
+            </p>
+            <p>
+              The result: a <strong>~11&times; smaller student</strong> that <strong>beats its adapted teacher by
+              +3.4 / +1.5 maskAP</strong> on Cityscapes / ADE20K, and runs <strong>4.6&times; faster</strong> at
+              <strong>~3&times; lower latency</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== TEASER VIDEO / FRAMEWORK ============== -->
+  <section class="hero teaser" id="teaser">
+    <div class="container is-max-desktop">
+      <div class="hero-body has-text-centered">
+        <figure class="image" style="width: 100%;">
+          <img class="clickable-image" src="assets/figures/fig1_framework.png?v=2"
+               alt="CAST three-stage framework overview"
+               data-caption="CAST three-stage framework: Teacher Adaptation → Knowledge Transfer → Student Refinement.">
+        </figure>
+        <h2 class="subtitle has-text-centered" style="margin-top: 1rem;">
+          The CAST pipeline: <strong>adapt the VFM teacher</strong>, <strong>distill a compact student</strong>,
+          then <strong>refine on labels</strong> to remove residual pseudo-label bias.
+        </h2>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== OVERVIEW ============== -->
+  <section class="section hero is-light" id="overview">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: var(--color-primary);">Overview</h2>
+          <div class="content has-text-justified">
+            <p>
+              Vision foundation models (VFMs) such as Grounding-DINO, SAM2, and DINOv2 deliver strong
+              <strong>open-set</strong> recognition, but their <strong>scale</strong> &mdash; and their generic
+              pre-training &mdash; make them costly to deploy and sub-optimal on specialized downstream tasks
+              like <strong>instance segmentation</strong> under tight label budgets.
+            </p>
+            <p>
+              We address this with a <strong>stage-wise SSKD pipeline</strong> built on two ideas:
+            </p>
+            <ol>
+              <li>
+                <strong>Contrastive Calibration.</strong> We adapt the VFM teacher via self-training, but
+                inject a pixel-wise contrastive head that sharpens mask boundaries &mdash; not just
+                pseudo-labels.
+              </li>
+              <li>
+                <strong>Debiased, Instance-Aware Sampling.</strong> During both adaptation and distillation,
+                we mine hard negatives through a joint mask-/class-probability embedding, focusing
+                repulsion on informative <em>inter-instance</em> pairs.
+              </li>
+            </ol>
+            <p>The two ideas compose into three concise stages:</p>
+
+            <div class="stage-grid">
+              <div class="stage-card">
+                <h4><span class="stage-num">1</span>Teacher Adaptation</h4>
+                <p>Adapt the VFM (Grounding-DINO + SAM2) to the target domain using labels, pseudo-labels,
+                and pixel-wise contrastive regularization. <code>L<sub>sup</sub></code> + <code>L<sub>semi</sub></code> + <code>L<sub>pxl</sub></code>.</p>
+              </div>
+              <div class="stage-card">
+                <h4><span class="stage-num">2</span>Knowledge Transfer</h4>
+                <p>Freeze the adapted teacher and distill into a 52M student (DINOv2-S + DPT-S + Mask2Former-style
+                decoder) using a unified objective over labeled and unlabeled data.</p>
+              </div>
+              <div class="stage-card">
+                <h4><span class="stage-num">3</span>Student Refinement</h4>
+                <p>Fine-tune the student on labeled data only to correct residual bias from the
+                pseudo-labels &mdash; sharpens decision boundaries for the target domain.</p>
+              </div>
+            </div>
+
+            <p>
+              A <strong>key insight</strong>: the same contrastive objective is maintained across both
+              <em>teacher adaptation</em> and <em>student distillation</em>, aligning teacher and student
+              embeddings in a shared instance-aware feature space.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== METHOD: CONTRASTIVE LOSS ============== -->
+  <section class="section hero" id="method">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: var(--color-primary);">Method: Instance-Aware Pixel-Wise Contrastive Loss</h2>
+          <div class="content has-text-justified">
+            <p>
+              Standard supervised and pseudo-label losses enforce correct masks, but do <em>not</em> explicitly
+              model pixel-level feature relationships. We add a <strong>NT-Xent contrastive loss</strong>
+              on weak/strong augmented views to better exploit both labeled and unlabeled images.
+            </p>
+
+            <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Pixel-wise contrastive loss</h3>
+            <p>
+              For an anchor pixel <em>(b, p)</em>, the positive pair is the same spatial location in the
+              other view; negatives are <em>R</em> hard-negative pixels sampled by our
+              instance-aware sampler:
+            </p>
+            <div class="eq-block">
+              <code>L<sub>pxl</sub> = &minus; (1/BN) &Sigma;<sub>b,p</sub> log &nbsp;
+              exp(s<sup>+</sup><sub>b,p</sub>) / [ exp(s<sup>+</sup><sub>b,p</sub>) + &Sigma;<sub>r</sub> exp(s<sup>&minus;</sup><sub>b,p,r</sub>) ]</code>
+            </div>
+
+            <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Debiased, instance-aware negative sampling</h3>
+            <p>
+              We construct a per-pixel sampling distribution by <strong>fusing mask and class predictions</strong>
+              into a joint pseudo-probability embedding
+              <code>y[b,p] = [P<sub>m</sub>[b, 1:K, p] &nbsp;|&nbsp; F<sub>c</sub>[b, p, 1:C+1]]</code>,
+              where <code>F<sub>c</sub>[b,p,c] = &Sigma;<sub>k</sub> P<sub>m</sub>[b,k,p] P<sub>c</sub>[b,k,c]</code>
+              is the expected class distribution at the pixel.
+            </p>
+            <p>
+              The dissimilarity score
+              <code>s<sup>deb</sup>((b,p),(b&prime;,q)) = max(0, 1 &minus; &lang;y&#771;[b,p], y&#771;[b&prime;,q]&rang;)</code>
+              is large when two pixels likely belong to <em>different instances</em> &mdash; precisely the
+              pairs that should be repelled. For each anchor we then sample <em>R</em> negatives
+              proportionally to <code>s<sup>deb</sup></code>.
+            </p>
+
+            <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Theoretical insight</h3>
+            <p>
+              Under a mild <em>negative-sampling guarantee</em> that the probability a sampled negative
+              is a true inter-instance pixel satisfies <code>p &gt; 0.5</code>:
+            </p>
+            <div class="eq-block">
+              <code>Proposition 3.1 (Expected Margin Growth). One gradient update on
+              L<sub>pxl</sub> increases the expected inter-instance margin
+              &Delta;<sub>emp</sub> by &epsilon; = &Theta;(p &middot; &lambda;<sub>pxl</sub>) &gt; 0.</code>
+            </div>
+            <p>
+              This expectation holds <strong>even when pseudo-labels are imperfect</strong>, provided
+              negatives are sampled by our instance-aware strategy. Empirically we observe
+              <code>p &gt; 0.9</code> and an approximately linear increase of <code>&Delta;<sub>emp</sub></code>
+              with <code>&lambda;<sub>pxl</sub></code>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== EMPIRICAL VALIDATION ============== -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: var(--color-primary);">Empirical Validation</h2>
+          <div class="content has-text-justified">
+            <p>
+              We monitor the empirical margin <code>&Delta;<sub>emp</sub> = NegMean &minus; PosMean</code> and the
+              false-negative rate (FNR, where <code>p = 1 &minus; FNR</code>) every 10k iterations on Cityscapes.
+              The negative-sampling guarantee is satisfied with a wide margin:
+              <code>p &gt; 0.9</code> throughout training, and the margin grows
+              approximately linearly with <code>&lambda;<sub>pxl</sub></code> &mdash; consistent with
+              Proposition&nbsp;3.1.
+            </p>
+
+            <div class="container has-text-centered" style="margin-top: 1.2rem;">
+              <figure class="image is-inline-block" style="width: 100%; max-width: 800px;">
+                <img class="clickable-image" src="assets/figures/fig3_empirical.png?v=2"
+                     alt="Empirical margin, FNR, and contrastive loss over training iterations"
+                     data-caption="Empirical margin (left), false-negative rate (center, dashed at p=0.5), contrastive loss (right) over training. λpxl ∈ {0.01, 0.05, 0.1, 0.2}.">
+                <figcaption style="font-size: 0.85em; color: #666; margin-top: 0.4rem;">
+                  <strong>Figure 3.</strong> Empirical margin, FNR, and contrastive loss over training iterations.
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== TRAINING FRAMEWORK ============== -->
+  <section class="section hero">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: var(--color-primary);">Unified Training Framework</h2>
+          <div class="content has-text-justified">
+            <p>
+              Teacher adaptation, student distillation, and student refinement are <em>special cases</em>
+              of a single unified objective:
+            </p>
+
+            <div class="eq-block">
+              <code>J(&theta;; D<sub>l</sub>, D<sub>u</sub>; &lambda;<sub>semi</sub>, &lambda;<sub>pxl</sub>) =
+              L<sub>sup</sub>(D<sub>l</sub>) + &lambda;<sub>semi</sub> &middot; L<sub>semi</sub>(D<sub>u</sub>) + &lambda;<sub>pxl</sub> &middot; L<sub>pxl</sub>(D<sub>l</sub> &cup; D<sub>u</sub>)</code>
+            </div>
+
+            <p>
+              Where <code>L<sub>sup</sub></code> enforces ground-truth supervision on labeled data,
+              <code>L<sub>semi</sub></code> transfers pseudo-label knowledge on unlabeled data, and
+              <code>L<sub>pxl</sub></code> imposes pixel-wise contrastive regularization across both sets.
+              The coefficients <code>&lambda;<sub>semi</sub></code> and <code>&lambda;<sub>pxl</sub></code>
+              balance these signals and turn on/off between stages.
+            </p>
+
+            <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Teacher adaptation &mdash; two stages</h3>
+            <ol>
+              <li>
+                Fine-tune pretrained VFM weights <code>&theta;<sub>T</sub><sup>0</sup></code> on labeled data only
+                &mdash; with contrastive regularization:
+                <code>&theta;<sub>T</sub>&prime; = argmin<sub>&theta;</sub> J(&theta;; D<sub>l</sub>, &empty;; 0, &lambda;<sub>pxl</sub>)</code>.
+              </li>
+              <li>
+                Generate pseudo-labels <code>&#375;<sub>j</sub><sup>u</sup> = f<sub>&theta;&prime;<sub>T</sub></sub>(x<sub>j</sub><sup>u</sup>)</code>
+                on unlabeled data, then re-initialize from <code>&theta;<sub>T</sub><sup>0</sup></code> and
+                train on <em>both</em> labeled and pseudo-labeled data:
+                <code>&theta;<sub>T</sub>&Prime; = argmin<sub>&theta;</sub> J(&theta;; D<sub>l</sub>, D<sub>u</sub>; 1, &lambda;<sub>pxl</sub>)</code>.
+              </li>
+            </ol>
+            <p>
+              This two-stage procedure yields a teacher that is better aligned with the target domain
+              and produces pseudo-labels that are both more accurate and more spatially consistent.
+            </p>
+
+            <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Knowledge transfer</h3>
+            <p>
+              With the adapted teacher <code>&theta;<sub>T</sub>&Prime;</code> frozen, we train the
+              student on the same unified objective:
+              <code>&theta;<sub>s</sub>* = argmin<sub>&theta;<sub>s</sub></sub> J(&theta;<sub>s</sub>; D<sub>l</sub>, D<sub>u</sub>; &lambda;<sub>semi</sub>, &lambda;<sub>pxl</sub>)</code>.
+              The contrastive signal continues to align teacher and student embeddings throughout distillation.
+            </p>
+
+            <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Student refinement</h3>
+            <p>
+              Finally, fine-tune the student on labeled data <em>only</em> to reduce residual pseudo-label
+              bias and sharpen decision boundaries:
+              <code>&theta;<sub>s</sub>&dagger; = argmin<sub>&theta;</sub> J(&theta;; D<sub>l</sub>, &empty;; 0, 0)</code>,
+              initialized from <code>&theta;<sub>s</sub>*</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== RESULTS — MAIN TABLE ============== -->
+  <section class="section hero is-light" id="results">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: var(--color-primary);">Main Results</h2>
+          <div class="content has-text-justified">
+            <p>
+              We evaluate on <strong>Cityscapes</strong> and <strong>ADE20K</strong> with 10% labeled data.
+              The teacher is a fused Grounding-DINO-Large + SAM2-L ensemble (568M params); the student is
+              DINOv2-S + DPT-S + Mask2Former-style decoder (52M params, &approx;9% of the teacher).
+            </p>
+
+            <table class="results-table">
+              <caption>
+                <strong>Table 1.</strong> Main results on Cityscapes and ADE20K (10% labels). * = adapted methods.
+                Blue: best / second-best. Teacher: 568M. Student: 52M.
+              </caption>
+              <thead>
+                <tr>
+                  <th style="text-align:left;">Method</th>
+                  <th>Data Regime</th>
+                  <th colspan="2" style="background: var(--color-table-header-bg-2); border-right: 2px solid #fff;">Cityscapes</th>
+                  <th colspan="2" style="background: var(--color-table-header-bg-2);">ADE20K</th>
+                </tr>
+                <tr>
+                  <th></th>
+                  <th></th>
+                  <th>maskAP</th>
+                  <th>maskAP<sub>50</sub></th>
+                  <th>maskAP</th>
+                  <th>maskAP<sub>50</sub></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="group-row"><td colspan="6">Teacher Adaptation (568M)</td></tr>
+                <tr><td class="row-label">Zero-shot VFM</td><td>None (pretrained)</td><td>22.0</td><td>42.3</td><td>8.1</td><td>18.2</td></tr>
+                <tr><td class="row-label">Supervised fine-tuning</td><td>Labeled only</td><td>28.7</td><td>53.4</td><td>14.2</td><td>23.5</td></tr>
+                <tr><td class="row-label">Self-training*</td><td>Labeled+Unlabeled</td><td>29.7</td><td>54.9</td><td>14.6</td><td>23.6</td></tr>
+                <tr><td class="row-label">Unbiased Teacher*</td><td>Labeled+Unlabeled</td><td class="second">29.8</td><td>54.9</td><td class="second">14.8</td><td>23.7</td></tr>
+                <tr><td class="row-label"><strong>CAST (ours)</strong></td><td>Labeled+Unlabeled</td><td class="best">30.5</td><td class="best">56.6</td><td class="best">15.2</td><td class="best">24.5</td></tr>
+
+                <tr class="group-row"><td colspan="6">Student Distillation (52M)</td></tr>
+                <tr><td class="row-label">Supervised fine-tuning</td><td>Labeled only</td><td>21.1</td><td>38.7</td><td>13.9</td><td>24.2</td></tr>
+                <tr><td class="row-label">PAIS</td><td>Labeled+Unlabeled</td><td>22.9</td><td>44.9</td><td>10.3</td><td>18.3</td></tr>
+                <tr><td class="row-label">Guided distillation</td><td>Labeled+Unlabeled</td><td>30.8</td><td>52.9</td><td>14.2</td><td>23.8</td></tr>
+                <tr><td class="row-label">Vemulapalli et al.*</td><td>Unlabeled only</td><td>24.4</td><td>45.6</td><td>5.1</td><td>9.3</td></tr>
+                <tr><td class="row-label">Depth-Guided</td><td>Labeled+Unlabeled</td><td>30.9</td><td>52.9</td><td>&mdash;</td><td>&mdash;</td></tr>
+                <tr><td class="row-label">S<sup>4</sup>M</td><td>Labeled+Unlabeled</td><td class="second">33.3</td><td class="second">56.7</td><td>&mdash;</td><td>&mdash;</td></tr>
+                <tr><td class="row-label"><strong>CAST (knowledge transfer)</strong></td><td>Labeled+Unlabeled</td><td>32.2</td><td>56.5</td><td>16.1</td><td class="second">27.4</td></tr>
+                <tr><td class="row-label"><strong>CAST (student refinement)</strong></td><td>Labeled only</td><td class="best">33.9</td><td class="best">58.7</td><td class="best">16.7</td><td class="best">28.0</td></tr>
+              </tbody>
+            </table>
+
+            <p>
+              The refined CAST student achieves the <strong>best maskAP on both datasets</strong> while
+              being roughly <strong>11&times; smaller</strong> than the composite VFM teacher. The
+              teacher-adaptation variant also tops every baseline, suggesting pixel-wise contrastive
+              regularization improves pseudo-label quality and feature discrimination.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== EFFICIENCY ============== -->
+  <section class="section hero">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: var(--color-primary);">Efficiency at a Glance</h2>
+          <div class="content has-text-justified">
+            <p>
+              The CAST student is not only more accurate &mdash; it is dramatically more efficient.
+              <strong>90.8% fewer parameters</strong>, <strong>77.3% lower FLOPs</strong>, <strong>78.1% lower
+              latency</strong>, and <strong>4.6&times; higher FPS</strong> on the same hardware.
+            </p>
+
+            <div class="container has-text-centered" style="margin-top: 1rem;">
+              <figure class="image is-inline-block" style="width: 100%; max-width: 700px;">
+                <img class="clickable-image" src="assets/figures/fig2_efficiency.png?v=2"
+                     alt="Efficiency comparison (log scale)"
+                     data-caption="Efficiency comparison (log scale): Params, FLOPs, Latency, Memory, FPS, and AP.">
+                <figcaption style="font-size: 0.85em; color: #666; margin-top: 0.4rem;">
+                  <strong>Figure 2.</strong> Efficiency comparison (log scale).
+                </figcaption>
+              </figure>
+            </div>
+
+            <div class="stat-grid" style="margin-top: 1.5rem;">
+              <div class="stat-card">
+                <div class="stat-value">&minus;90.8%</div>
+                <div class="stat-label">Parameters<br>568M &rarr; 52M</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">&minus;77.3%</div>
+                <div class="stat-label">FLOPs<br>880G &rarr; 200G</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">&minus;78.1%</div>
+                <div class="stat-label">Latency<br>350.87&nbsp;ms &rarr; 76.92&nbsp;ms</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">4.56&times;</div>
+                <div class="stat-label">FPS speedup<br>2.85 &rarr; 13.0</div>
+              </div>
+            </div>
+
+            <div class="container has-text-centered" style="margin-top: 1.5rem;">
+              <figure class="image is-inline-block" style="width: 100%; max-width: 600px;">
+                <img class="clickable-image" src="assets/figures/fig7_radar.png?v=2"
+                     alt="Performance-complexity radar chart"
+                     data-caption="CAST variants: accuracy vs. efficiency (normalized).">
+                <figcaption style="font-size: 0.85em; color: #666; margin-top: 0.4rem;">
+                  <strong>Figure 7.</strong> CAST variants &mdash; accuracy vs. efficiency radar (normalized).
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== ABLATIONS ============== -->
+  <section class="section hero is-light" id="ablations">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: var(--color-primary);">Ablation Studies</h2>
+          <div class="content has-text-justified">
+
+            <h3 class="title is-5" style="color: var(--color-primary);">Loss components</h3>
+            <p>
+              Pseudo-label supervision (<code>L<sub>semi</sub></code>) and pixel-wise contrastive
+              regularization (<code>L<sub>pxl</sub></code>) are <strong>complementary</strong>: adding
+              both yields the best student (32.2 maskAP on Cityscapes, +11.1 over supervised-only).
+            </p>
+            <table class="results-table">
+              <caption><strong>Table 2.</strong> Effect of loss terms on Cityscapes (10% labels).</caption>
+              <thead>
+                <tr>
+                  <th style="text-align:left;">Method</th>
+                  <th>L<sub>sup</sub></th>
+                  <th>L<sub>semi</sub></th>
+                  <th>L<sub>pxl</sub></th>
+                  <th>Teacher</th>
+                  <th>Student</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="row-label">(a) Sup. only</td><td>&#10003;</td><td></td><td></td><td>28.7</td><td>21.1</td></tr>
+                <tr><td class="row-label">(b) + Pseudo</td><td>&#10003;</td><td>&#10003;</td><td></td><td>29.7</td><td>30.7</td></tr>
+                <tr><td class="row-label">(c) + Pixel loss</td><td>&#10003;</td><td></td><td>&#10003;</td><td>29.6</td><td>27.5</td></tr>
+                <tr><td class="row-label">(d) (b)+(c) &mdash; <strong>CAST</strong></td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td class="best">30.5</td><td class="best">32.2</td></tr>
+              </tbody>
+            </table>
+
+            <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.6rem;">Training stages</h3>
+            <p>
+              All three stages are <strong>necessary</strong>. Removing teacher adaptation costs
+              <strong>&minus;8.2 maskAP</strong>; removing student refinement costs <strong>&minus;1.7</strong>;
+              removing distillation entirely costs <strong>&minus;12.8</strong>.
+            </p>
+            <table class="results-table">
+              <caption><strong>Table 3.</strong> Effect of training stages on Cityscapes (10% labels).</caption>
+              <thead>
+                <tr>
+                  <th style="text-align:left;">Variant</th>
+                  <th>Teacher Adapt.</th>
+                  <th>Distill.</th>
+                  <th>Student FT</th>
+                  <th>maskAP</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="row-label">Full pipeline</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td class="best">33.9</td></tr>
+                <tr><td class="row-label">No student FT</td><td>&#10003;</td><td>&#10003;</td><td></td><td>32.2</td></tr>
+                <tr><td class="row-label">No teacher adapt.</td><td></td><td>&#10003;</td><td>&#10003;</td><td>25.7</td></tr>
+                <tr><td class="row-label">Distillation only</td><td></td><td>&#10003;</td><td></td><td>23.8</td></tr>
+                <tr><td class="row-label">No distill. (Sup.)</td><td></td><td></td><td>&#10003;</td><td>21.1</td></tr>
+              </tbody>
+            </table>
+
+            <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.6rem;">Negative-sampling strategy</h3>
+            <p>
+              <strong>Fusing mask and class predictions</strong> for negative sampling outperforms
+              either cue alone &mdash; confirming that the two sources of information are complementary
+              for identifying informative inter-instance negatives.
+            </p>
+            <table class="results-table">
+              <caption><strong>Table 4.</strong> Ablation of negative-sampling strategies on Cityscapes.</caption>
+              <thead>
+                <tr>
+                  <th style="text-align:left;">Method</th>
+                  <th>maskAP (%)</th>
+                  <th>maskAP<sub>50</sub> (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="row-label">Uniform</td><td>29.4</td><td>50.2</td></tr>
+                <tr><td class="row-label">Mask-Only</td><td>30.6</td><td>55.0</td></tr>
+                <tr><td class="row-label">Class-Only</td><td>31.1</td><td>55.3</td></tr>
+                <tr><td class="row-label"><strong>Fusion (CAST)</strong></td><td class="best">32.2</td><td class="best">56.5</td></tr>
+              </tbody>
+            </table>
+
+            <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.6rem;">Student architecture</h3>
+            <p>
+              DINOv2-S encoder + DPT decoder head offers the best accuracy/efficiency trade-off
+              among the backbones and heads evaluated.
+            </p>
+            <table class="results-table">
+              <caption><strong>Table 5.</strong> Student architecture ablation on Cityscapes.
+              Top: encoder (fixed DPT decoder). Bottom: decoder (fixed DINOv2-S encoder).</caption>
+              <thead>
+                <tr><th style="text-align:left;">Encoder</th><th>maskAP</th><th>maskAP<sub>50</sub></th><th>Params (M)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="row-label">ResNet50</td><td>25.5</td><td>49.3</td><td>24</td></tr>
+                <tr><td class="row-label">SAM2-S</td><td>22.1</td><td>39.2</td><td>35</td></tr>
+                <tr><td class="row-label"><strong>DINOv2-S</strong></td><td class="best">30.7</td><td class="best">54.9</td><td>22</td></tr>
+              </tbody>
+              <thead>
+                <tr><th style="text-align:left;">Decoder</th><th>maskAP</th><th>maskAP<sub>50</sub></th><th>Params (M)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="row-label">FPN</td><td>28.9</td><td>52.4</td><td>18</td></tr>
+                <tr><td class="row-label"><strong>DPT</strong></td><td class="best">30.7</td><td class="best">54.9</td><td>22</td></tr>
+              </tbody>
+            </table>
+
+            <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.6rem;">Scalability with label budget</h3>
+            <p>
+              CAST consistently outperforms prior SSKD baselines across all label fractions on Cityscapes.
+              At 5% labels it achieves <strong>30.7 maskAP</strong> &mdash; substantially above PAIS (18.0)
+              and Guided Distillation (23.0). At 30% labels it reaches <strong>40.4 maskAP</strong>,
+              beating the strongest baseline (S<sup>4</sup>M, 37.8) by <strong>+2.6 maskAP</strong>.
+            </p>
+            <table class="results-table">
+              <caption><strong>Table 6.</strong> Scalability across label fractions on Cityscapes.</caption>
+              <thead>
+                <tr>
+                  <th>Fraction</th>
+                  <th>Teacher Adapt.</th>
+                  <th>Distillation</th>
+                  <th>CAST (refined)</th>
+                  <th>PAIS</th>
+                  <th>Guided dist.</th>
+                  <th>S<sup>4</sup>M</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>5%</td><td>29.4</td><td>29.2</td><td class="best">30.7</td><td>18.0</td><td>23.0</td><td>30.1</td></tr>
+                <tr><td>10%</td><td>30.5</td><td>32.2</td><td class="best">33.9</td><td>22.9</td><td>30.8</td><td>33.3</td></tr>
+                <tr><td>30%</td><td>33.3</td><td>38.5</td><td class="best">40.4</td><td>32.8</td><td>35.6</td><td>37.8</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== GALLERY — QUALITATIVE ============== -->
+  <section class="section hero" id="gallery">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: var(--color-primary);">Qualitative Results</h2>
+
+          <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1rem;">Cityscapes &mdash; vs. Guided Distillation [3]</h3>
+          <p class="has-text-justified">
+            Top row: Guided Distillation (baseline). Bottom row: <strong>CAST</strong>. Note the
+            cleaner instance boundaries, fewer merged boxes, and better separation of adjacent cars
+            and pedestrians.
+          </p>
+          <div class="container has-text-centered" style="margin: 1rem 0;">
+            <figure class="image is-inline-block" style="width: 100%;">
+              <img class="clickable-image" src="assets/figures/fig4_qualitative_cityscapes.png?v=2"
+                   alt="Qualitative Cityscapes comparison"
+                   data-caption="Qualitative results on Cityscapes: Guided dist. (top) vs. CAST (bottom).">
+              <figcaption style="font-size: 0.85em; color: #666; margin-top: 0.4rem;">
+                <strong>Figure 4.</strong> Guided dist. [3] (top) versus CAST (bottom).
+              </figcaption>
+            </figure>
+          </div>
+
+          <h3 class="title is-5" style="color: var(--color-primary); margin-top: 2rem;">Bias reduction across the three stages</h3>
+          <p class="has-text-justified">
+            Top row: pseudo-labels generated by the adapted teacher. Bottom row: CAST student
+            predictions after distillation + refinement &mdash; showing reduced pseudo-label bias and
+            sharper instance boundaries.
+          </p>
+          <div class="container has-text-centered" style="margin: 1rem 0;">
+            <figure class="image is-inline-block" style="width: 100%;">
+              <img class="clickable-image" src="assets/figures/fig5_bias_reduction.png?v=2"
+                   alt="Qualitative bias reduction in stage-wise distillation"
+                   data-caption="Top: teacher pseudo-labels. Bottom: refined student predictions.">
+              <figcaption style="font-size: 0.85em; color: #666; margin-top: 0.4rem;">
+                <strong>Figure 5.</strong> Qualitative bias reduction in stage-wise distillation.
+              </figcaption>
+            </figure>
+          </div>
+
+          <h3 class="title is-5" style="color: var(--color-primary); margin-top: 2rem;">ADE20K &mdash; diverse scenes</h3>
+          <p class="has-text-justified">
+            Despite training on Cityscapes-style labels, the CAST student generalizes to ADE20K's
+            diverse indoor and outdoor scenes with 100 thing classes.
+          </p>
+          <div class="container has-text-centered" style="margin: 1rem 0;">
+            <figure class="image is-inline-block" style="width: 100%;">
+              <img class="clickable-image" src="assets/figures/fig6_qualitative_ade20k.png?v=2"
+                   alt="Qualitative ADE20K results"
+                   data-caption="Qualitative results on ADE20K (student predictions).">
+              <figcaption style="font-size: 0.85em; color: #666; margin-top: 0.4rem;">
+                <strong>Figure 6.</strong> Qualitative results on ADE20K.
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== CONCLUSION ============== -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: var(--color-primary);">Conclusion</h2>
+          <div class="content has-text-justified">
+            <p>
+              We presented <strong>CAST</strong>, a semi-supervised knowledge distillation pipeline
+              that combines <strong>self-training</strong>, <strong>instance-aware pixel-wise contrastive
+              learning</strong>, and <strong>supervised refinement</strong> to transfer knowledge from
+              large vision foundation models into compact student experts.
+            </p>
+            <p>
+              The resulting student is <strong>~11&times; smaller</strong> than the teacher while
+              <strong>surpassing</strong> the adapted teacher by <strong>+3.4 maskAP on Cityscapes</strong>
+              and <strong>+1.5 maskAP on ADE20K</strong>. The instance-aware negative-sampling scheme
+              has a theoretical guarantee on the expected inter-instance margin
+              (Proposition&nbsp;3.1) and is empirically validated with <code>p &gt; 0.9</code> throughout
+              training.
+            </p>
+            <p>
+              <strong>Future work</strong> includes simplifying the multi-stage pipeline, evaluating on
+              additional domains (medical, remote sensing), and extending the framework to broader
+              efficient perception settings &mdash; including open-vocabulary and video scenarios.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== BIBTEX ============== -->
+  <section class="section" id="bibtex">
+    <div class="container is-max-desktop content">
+      <h2 class="title is-3" style="color: var(--color-primary);">BibTeX</h2>
+      <pre><code id="bibtex-code">@inproceedings{taghavi2026cast,
+  title     = {Training a Student Expert via Semi-Supervised Foundation Model Distillation},
+  author    = {Taghavi, Pardis and Liu, Tian and Li, Renjie and Langari, Reza and Tu, Zhengzhong},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
+  year      = {2026},
+  note      = {Open Access}
+}</code></pre>
+      <button class="button is-dark" onclick="copyBibTex()">Copy BibTeX</button>
+
+      <h2 class="title is-3" style="color: var(--color-primary); margin-top: 2.5rem;">Acknowledgments</h2>
+      <p>
+        Portions of this research were conducted with the advanced computing resources provided by
+        <strong>Texas A&amp;M High Performance Research Computing</strong>. We thank the
+        Grounding-DINO, SAM2, DINOv2, and DPT teams for releasing their models and code.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============== FOOTER ============== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content">
+            <p>
+              This page was built using the
+              <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a>
+              and design cues borrowed from
+              <a href="https://svg-project.github.io/v2/" target="_blank">Sparse VideoGen 2</a> &mdash; thank you.
+              <br>
+              This website is licensed under a
+              <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============== MODAL + COPY BIBTEX ============== -->
+  <script>
+    function copyBibTex() {
+      var copyText = document.getElementById("bibtex-code").innerText;
+      navigator.clipboard.writeText(copyText).then(function () {
+        alert("BibTeX copied to clipboard!");
+      }, function (err) {
+        alert("Failed to copy BibTeX: ", err);
+      });
+    }
+
+    // Image modal
+    (function () {
+      document.addEventListener('DOMContentLoaded', function () {
+        const images = Array.from(document.querySelectorAll('.clickable-image'));
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        const modalCaption = document.getElementById('modalCaption');
+        const closeBtn = document.querySelector('.image-modal-close');
+        let currentIndex = 0;
+
+        function showModal(img, index) {
+          currentIndex = index;
+          modal.style.display = 'block';
+          modalImg.src = img.src;
+          modalImg.alt = img.alt || '';
+          modalCaption.textContent = img.getAttribute('data-caption') || img.alt || '';
+          document.body.style.overflow = 'hidden';
+        }
+        function closeModal() {
+          modal.style.display = 'none';
+          document.body.style.overflow = 'auto';
+        }
+        function showNext() {
+          currentIndex = (currentIndex + 1) % images.length;
+          showModal(images[currentIndex], currentIndex);
+        }
+        function showPrev() {
+          currentIndex = (currentIndex - 1 + images.length) % images.length;
+          showModal(images[currentIndex], currentIndex);
+        }
+
+        images.forEach((img, i) => {
+          img.addEventListener('click', () => showModal(img, i));
+        });
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', (e) => {
+          if (modal.style.display !== 'block') return;
+          if (e.key === 'Escape') closeModal();
+          else if (e.key === 'ArrowRight') showNext();
+          else if (e.key === 'ArrowLeft') showPrev();
+        });
+      });
+    })();
+  </script>
+
+  <div id="imageModal" class="image-modal">
+    <span class="image-modal-close">&times;</span>
+    <img class="image-modal-content" id="modalImage" alt="Enlarged figure">
+    <div class="image-modal-caption" id="modalCaption"></div>
+  </div>
+
+</body>
+</html>
