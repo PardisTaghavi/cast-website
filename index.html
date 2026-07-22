@@ -61,7 +61,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="static/css/bulma.min.css">
   <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
@@ -83,6 +83,14 @@
       --nv-gray-dark:  #5E5E5E;
       --nv-gray-light: #CDCDCD;
       --nv-orange:     #FFA500;
+    }
+
+    /* ====== Typography ====== */
+    :root {
+      --font-display: "Outfit", "Segoe UI", sans-serif;
+      --font-sans: "Outfit", "Segoe UI", sans-serif;
+      --font-serif: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
     }
 
     /* ====== Semantic tokens — LIGHT (default) ====== */
@@ -485,6 +493,27 @@
     .hero .title, .hero .subtitle { color: var(--color-text); font-family: var(--font-display); letter-spacing: -0.02em; }
     .hero { background-color: var(--color-bg) !important; }
 
+    /* TL;DR: editorial reading face for the summary block */
+    #tldr .tldr-body {
+      font-family: var(--font-serif);
+      font-size: 1.125rem;
+      font-optical-sizing: auto;
+      line-height: 1.75;
+      letter-spacing: 0.005em;
+      color: var(--color-text);
+    }
+    #tldr .tldr-body p { margin-bottom: 1.15em; }
+    #tldr .tldr-body strong,
+    #tldr .tldr-body b {
+      color: var(--color-text);
+      font-weight: 700;
+      font-family: var(--font-serif);
+    }
+    #tldr .tldr-body em {
+      color: var(--color-text);
+      font-style: italic;
+    }
+
     /* Make sure ALL text content picks up themed colors */
     body, .content, .content p, .content li, .content td,
     .content h1, .content h2, .content h3, .content h4, .content h5, .content h6 {
@@ -690,7 +719,7 @@
       <div class="columns is-centered has-text-centered">
         <div class="column is-four-fifths">
           <h2 class="title is-3" style="color: var(--color-primary);">TL;DR</h2>
-          <div class="content has-text-justified" style="font-size: 1.05rem;">
+          <div class="content has-text-justified tldr-body">
             <p>
               <strong>CAST</strong> is a three-stage <strong>semi-supervised knowledge distillation</strong> framework
               that compresses large pre-trained <strong>vision foundation models</strong> (Grounding-DINO + SAM2,
