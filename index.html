@@ -493,6 +493,25 @@
     .hero .title, .hero .subtitle { color: var(--color-text); font-family: var(--font-display); letter-spacing: -0.02em; }
     .hero { background-color: var(--color-bg) !important; }
 
+    /* Teaser figure caption: full-contrast text; emphasize with underline, not gray */
+    #teaser .teaser-caption {
+      margin-top: 1rem;
+      color: var(--color-text) !important;
+      font-weight: 400;
+    }
+    #teaser .teaser-caption .teaser-em {
+      color: inherit !important;
+      font-weight: 600;
+      text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 0.18em;
+      text-decoration-color: currentColor;
+    }
+    [data-theme="dark"] #teaser .teaser-caption,
+    [data-theme="dark"] #teaser .teaser-caption .teaser-em {
+      color: #ffffff !important;
+    }
+
     /* TL;DR: editorial reading face for the summary block */
     #tldr .tldr-body {
       font-family: var(--font-serif);
@@ -752,9 +771,12 @@
                alt="CAST three-stage framework overview"
                data-caption="CAST three-stage framework: Teacher Adaptation → Knowledge Transfer → Student Refinement.">
         </figure>
-        <h2 class="subtitle has-text-centered" style="margin-top: 1rem;">
-          The CAST pipeline: <strong>adapt the VFM teacher</strong>, <strong>distill a compact student</strong>,
-          then <strong>refine on labels</strong> to remove residual pseudo-label bias.
+        <h2 class="subtitle has-text-centered teaser-caption">
+          The CAST pipeline:
+          <span class="teaser-em">adapt the VFM teacher</span>,
+          <span class="teaser-em">distill a compact student</span>,
+          then <span class="teaser-em">refine on labels</span>
+          to remove residual pseudo-label bias.
         </h2>
       </div>
     </div>
