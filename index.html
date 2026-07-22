@@ -68,6 +68,7 @@
   <link rel="stylesheet" href="static/css/bulma-slider.min.css">
   <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLso7kb1qOAh4DjJTqrKk0YuVxWbmEE5jKOi8aM=" crossorigin="anonymous">
   <link rel="stylesheet" href="static/css/index.css">
 
   <style>
@@ -510,18 +511,37 @@
       .stage-grid { grid-template-columns: 1fr; }
     }
 
-    /* ----- Equation block ----- */
+    /* ----- Equation block + KaTeX ----- */
     .eq-block {
       background: var(--color-equation-bg);
       border-left: 4px solid var(--color-equation-border);
-      padding: 0.8rem 1.2rem;
-      margin: 0.8rem 0;
+      padding: 0.95rem 1.2rem;
+      margin: 0.9rem 0;
       border-radius: 0 4px 4px 0;
-      font-family: var(--font-mono);
-      font-size: 0.95rem;
-      letter-spacing: -0.005em;
       overflow-x: auto;
       color: var(--color-text);
+      text-align: center;
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+    .eq-block.prop-block {
+      text-align: left;
+    }
+    .eq-block .katex-display {
+      margin: 0.25em 0;
+    }
+    .katex {
+      color: var(--color-text);
+      font-size: 1.08em;
+    }
+    [data-theme="dark"] .katex,
+    [data-theme="dark"] .eq-block {
+      color: #ffffff;
+    }
+    [data-theme="dark"] code {
+      color: #ffffff;
+      background: #243041;
     }
 
     /* Bulma overrides for theme */
@@ -852,7 +872,7 @@
               <div class="stage-card">
                 <h4><span class="stage-num">1</span>Teacher Adaptation</h4>
                 <p>Adapt the VFM (Grounding-DINO + SAM2) to the target domain using labels, pseudo-labels,
-                and pixel-wise contrastive regularization. <code>L<sub>sup</sub></code> + <code>L<sub>semi</sub></code> + <code>L<sub>pxl</sub></code>.</p>
+                and pixel-wise contrastive regularization. \(\mathcal{L}_{\mathrm{sup}} + \mathcal{L}_{\mathrm{semi}} + \mathcal{L}_{\mathrm{pxl}}\).</p>
               </div>
               <div class="stage-card">
                 <h4><span class="stage-num">2</span>Knowledge Transfer</h4>
@@ -892,46 +912,45 @@
 
             <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Pixel-wise contrastive loss</h3>
             <p>
-              For an anchor pixel <em>(b, p)</em>, the positive pair is the same spatial location in the
-              other view; negatives are <em>R</em> hard-negative pixels sampled by our
+              For an anchor pixel \((b, p)\), the positive pair is the same spatial location in the
+              other view; negatives are \(R\) hard-negative pixels sampled by our
               instance-aware sampler:
             </p>
             <div class="eq-block">
-              <code>L<sub>pxl</sub> = &minus; (1/BN) &Sigma;<sub>b,p</sub> log &nbsp;
-              exp(s<sup>+</sup><sub>b,p</sub>) / [ exp(s<sup>+</sup><sub>b,p</sub>) + &Sigma;<sub>r</sub> exp(s<sup>&minus;</sup><sub>b,p,r</sub>) ]</code>
+              $$\mathcal{L}_{\mathrm{pxl}} = -\frac{1}{BN}\sum_{b,p}\log\frac{\exp(s^{+}_{b,p})}{\exp(s^{+}_{b,p})+\sum_{r}\exp(s^{-}_{b,p,r})}$$
             </div>
 
             <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Debiased, instance-aware negative sampling</h3>
             <p>
               We construct a per-pixel sampling distribution by <strong>fusing mask and class predictions</strong>
               into a joint pseudo-probability embedding
-              <code>y[b,p] = [P<sub>m</sub>[b, 1:K, p] &nbsp;|&nbsp; F<sub>c</sub>[b, p, 1:C+1]]</code>,
-              where <code>F<sub>c</sub>[b,p,c] = &Sigma;<sub>k</sub> P<sub>m</sub>[b,k,p] P<sub>c</sub>[b,k,c]</code>
+              \(y[b,p] = \big[P_{m}[b, 1{:}K, p] \,\Vert\, F_{c}[b, p, 1{:}C{+}1]\big]\),
+              where \(F_{c}[b,p,c] = \sum_{k} P_{m}[b,k,p]\, P_{c}[b,k,c]\)
               is the expected class distribution at the pixel.
             </p>
             <p>
               The dissimilarity score
-              <code>s<sup>deb</sup>((b,p),(b&prime;,q)) = max(0, 1 &minus; &lang;y&#771;[b,p], y&#771;[b&prime;,q]&rang;)</code>
+              \(s^{\mathrm{deb}}\big((b,p),(b',q)\big) = \max\big(0,\, 1 - \langle\tilde{y}[b,p],\, \tilde{y}[b',q]\rangle\big)\)
               is large when two pixels likely belong to <em>different instances</em> &mdash; precisely the
-              pairs that should be repelled. For each anchor we then sample <em>R</em> negatives
-              proportionally to <code>s<sup>deb</sup></code>.
+              pairs that should be repelled. For each anchor we then sample \(R\) negatives
+              proportionally to \(s^{\mathrm{deb}}\).
             </p>
 
             <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Theoretical insight</h3>
             <p>
               Under a mild <em>negative-sampling guarantee</em> that the probability a sampled negative
-              is a true inter-instance pixel satisfies <code>p &gt; 0.5</code>:
+              is a true inter-instance pixel satisfies \(p &gt; 0.5\):
             </p>
-            <div class="eq-block">
-              <code>Proposition 3.1 (Expected Margin Growth). One gradient update on
-              L<sub>pxl</sub> increases the expected inter-instance margin
-              &Delta;<sub>emp</sub> by &epsilon; = &Theta;(p &middot; &lambda;<sub>pxl</sub>) &gt; 0.</code>
+            <div class="eq-block prop-block">
+              <strong>Proposition 3.1 (Expected Margin Growth).</strong>
+              One gradient update on \(\mathcal{L}_{\mathrm{pxl}}\) increases the expected inter-instance margin
+              \(\Delta_{\mathrm{emp}}\) by \(\varepsilon = \Theta(p \cdot \lambda_{\mathrm{pxl}}) &gt; 0\).
             </div>
             <p>
               This expectation holds <strong>even when pseudo-labels are imperfect</strong>, provided
               negatives are sampled by our instance-aware strategy. Empirically we observe
-              <code>p &gt; 0.9</code> and an approximately linear increase of <code>&Delta;<sub>emp</sub></code>
-              with <code>&lambda;<sub>pxl</sub></code>.
+              \(p &gt; 0.9\) and an approximately linear increase of \(\Delta_{\mathrm{emp}}\)
+              with \(\lambda_{\mathrm{pxl}}\).
             </p>
           </div>
         </div>
@@ -947,11 +966,11 @@
           <h2 class="title is-3" style="color: var(--color-primary);">Empirical Validation</h2>
           <div class="content has-text-justified">
             <p>
-              We monitor the empirical margin <code>&Delta;<sub>emp</sub> = NegMean &minus; PosMean</code> and the
-              false-negative rate (FNR, where <code>p = 1 &minus; FNR</code>) every 10k iterations on Cityscapes.
+              We monitor the empirical margin \(\Delta_{\mathrm{emp}} = \mathrm{NegMean} - \mathrm{PosMean}\) and the
+              false-negative rate (FNR, where \(p = 1 - \mathrm{FNR}\)) every 10k iterations on Cityscapes.
               The negative-sampling guarantee is satisfied with a wide margin:
-              <code>p &gt; 0.9</code> throughout training, and the margin grows
-              approximately linearly with <code>&lambda;<sub>pxl</sub></code> &mdash; consistent with
+              \(p &gt; 0.9\) throughout training, and the margin grows
+              approximately linearly with \(\lambda_{\mathrm{pxl}}\) &mdash; consistent with
               Proposition&nbsp;3.1.
             </p>
 
@@ -984,30 +1003,31 @@
             </p>
 
             <div class="eq-block">
-              <code>J(&theta;; D<sub>l</sub>, D<sub>u</sub>; &lambda;<sub>semi</sub>, &lambda;<sub>pxl</sub>) =
-              L<sub>sup</sub>(D<sub>l</sub>) + &lambda;<sub>semi</sub> &middot; L<sub>semi</sub>(D<sub>u</sub>) + &lambda;<sub>pxl</sub> &middot; L<sub>pxl</sub>(D<sub>l</sub> &cup; D<sub>u</sub>)</code>
+              $$\mathcal{J}(\theta; \mathcal{D}_l, \mathcal{D}_u; \lambda_{\mathrm{semi}}, \lambda_{\mathrm{pxl}}) =
+              \mathcal{L}_{\mathrm{sup}}(\mathcal{D}_l) + \lambda_{\mathrm{semi}}\cdot\mathcal{L}_{\mathrm{semi}}(\mathcal{D}_u)
+              + \lambda_{\mathrm{pxl}}\cdot\mathcal{L}_{\mathrm{pxl}}(\mathcal{D}_l \cup \mathcal{D}_u)$$
             </div>
 
             <p>
-              Where <code>L<sub>sup</sub></code> enforces ground-truth supervision on labeled data,
-              <code>L<sub>semi</sub></code> transfers pseudo-label knowledge on unlabeled data, and
-              <code>L<sub>pxl</sub></code> imposes pixel-wise contrastive regularization across both sets.
-              The coefficients <code>&lambda;<sub>semi</sub></code> and <code>&lambda;<sub>pxl</sub></code>
+              Where \(\mathcal{L}_{\mathrm{sup}}\) enforces ground-truth supervision on labeled data,
+              \(\mathcal{L}_{\mathrm{semi}}\) transfers pseudo-label knowledge on unlabeled data, and
+              \(\mathcal{L}_{\mathrm{pxl}}\) imposes pixel-wise contrastive regularization across both sets.
+              The coefficients \(\lambda_{\mathrm{semi}}\) and \(\lambda_{\mathrm{pxl}}\)
               balance these signals and turn on/off between stages.
             </p>
 
             <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Teacher adaptation &mdash; two stages</h3>
             <ol>
               <li>
-                Fine-tune pretrained VFM weights <code>&theta;<sub>T</sub><sup>0</sup></code> on labeled data only
+                Fine-tune pretrained VFM weights \(\theta_{T}^{0}\) on labeled data only
                 &mdash; with contrastive regularization:
-                <code>&theta;<sub>T</sub>&prime; = argmin<sub>&theta;</sub> J(&theta;; D<sub>l</sub>, &empty;; 0, &lambda;<sub>pxl</sub>)</code>.
+                \(\theta_{T}' = \arg\min_{\theta}\, \mathcal{J}(\theta; \mathcal{D}_l, \emptyset; 0, \lambda_{\mathrm{pxl}})\).
               </li>
               <li>
-                Generate pseudo-labels <code>&#375;<sub>j</sub><sup>u</sup> = f<sub>&theta;&prime;<sub>T</sub></sub>(x<sub>j</sub><sup>u</sup>)</code>
-                on unlabeled data, then re-initialize from <code>&theta;<sub>T</sub><sup>0</sup></code> and
+                Generate pseudo-labels \(\hat{y}_{j}^{u} = f_{\theta'_{T}}(x_{j}^{u})\)
+                on unlabeled data, then re-initialize from \(\theta_{T}^{0}\) and
                 train on <em>both</em> labeled and pseudo-labeled data:
-                <code>&theta;<sub>T</sub>&Prime; = argmin<sub>&theta;</sub> J(&theta;; D<sub>l</sub>, D<sub>u</sub>; 1, &lambda;<sub>pxl</sub>)</code>.
+                \(\theta_{T}'' = \arg\min_{\theta}\, \mathcal{J}(\theta; \mathcal{D}_l, \mathcal{D}_u; 1, \lambda_{\mathrm{pxl}})\).
               </li>
             </ol>
             <p>
@@ -1017,9 +1037,9 @@
 
             <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Knowledge transfer</h3>
             <p>
-              With the adapted teacher <code>&theta;<sub>T</sub>&Prime;</code> frozen, we train the
+              With the adapted teacher \(\theta_{T}''\) frozen, we train the
               student on the same unified objective:
-              <code>&theta;<sub>s</sub>* = argmin<sub>&theta;<sub>s</sub></sub> J(&theta;<sub>s</sub>; D<sub>l</sub>, D<sub>u</sub>; &lambda;<sub>semi</sub>, &lambda;<sub>pxl</sub>)</code>.
+              \(\theta_{s}^{*} = \arg\min_{\theta_{s}}\, \mathcal{J}(\theta_{s}; \mathcal{D}_l, \mathcal{D}_u; \lambda_{\mathrm{semi}}, \lambda_{\mathrm{pxl}})\).
               The contrastive signal continues to align teacher and student embeddings throughout distillation.
             </p>
 
@@ -1027,8 +1047,8 @@
             <p>
               Finally, fine-tune the student on labeled data <em>only</em> to reduce residual pseudo-label
               bias and sharpen decision boundaries:
-              <code>&theta;<sub>s</sub>&dagger; = argmin<sub>&theta;</sub> J(&theta;; D<sub>l</sub>, &empty;; 0, 0)</code>,
-              initialized from <code>&theta;<sub>s</sub>*</code>.
+              \(\theta_{s}^{\dagger} = \arg\min_{\theta}\, \mathcal{J}(\theta; \mathcal{D}_l, \emptyset; 0, 0)\),
+              initialized from \(\theta_{s}^{*}\).
             </p>
           </div>
         </div>
@@ -1171,8 +1191,8 @@
 
             <h3 class="title is-5" style="color: var(--color-primary);">Loss components</h3>
             <p>
-              Pseudo-label supervision (<code>L<sub>semi</sub></code>) and pixel-wise contrastive
-              regularization (<code>L<sub>pxl</sub></code>) are <strong>complementary</strong>: adding
+              Pseudo-label supervision (\(\mathcal{L}_{\mathrm{semi}}\)) and pixel-wise contrastive
+              regularization (\(\mathcal{L}_{\mathrm{pxl}}\)) are <strong>complementary</strong>: adding
               both yields the best student (32.2 maskAP on Cityscapes, +11.1 over supervised-only).
             </p>
             <table class="results-table">
@@ -1380,7 +1400,7 @@
               <strong>surpassing</strong> the adapted teacher by <strong>+3.4 maskAP on Cityscapes</strong>
               and <strong>+1.5 maskAP on ADE20K</strong>. The instance-aware negative-sampling scheme
               has a theoretical guarantee on the expected inter-instance margin
-              (Proposition&nbsp;3.1) and is empirically validated with <code>p &gt; 0.9</code> throughout
+              (Proposition&nbsp;3.1) and is empirically validated with \(p &gt; 0.9\) throughout
               training.
             </p>
             <p>
@@ -1504,6 +1524,21 @@
   <!-- GoatCounter: free, privacy-friendly analytics (dashboard visible only to you) -->
   <script data-goatcounter="https://pardistaghavi.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-FvTRiDTZ9oYpnuohWTRTmKHyvsivFoaJmJlS/kGwSpafUeR2gPFWgjUvEApeCzmI" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43g75JRHym+4HLdENqHzbix1mYLeK7sa1vOPPlsahnpFxdtC8ZjlnFwqotZJyHOa" crossorigin="anonymous"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (typeof renderMathInElement !== "function") return;
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: "$$", right: "$$", display: true},
+          {left: "\\(", right: "\\)", display: false}
+        ],
+        throwOnError: false
+      });
+    });
+  </script>
 
 </body>
 </html>
