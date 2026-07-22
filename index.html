@@ -68,7 +68,7 @@
   <link rel="stylesheet" href="static/css/bulma-slider.min.css">
   <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="static/css/katex.min.css?v=3">
   <link rel="stylesheet" href="static/css/index.css">
 
   <style>
@@ -1021,11 +1021,7 @@
               of a single unified objective:
             </p>
 
-            <div class="eq-block">
-              $$\mathcal{J}(\theta; \mathcal{D}_l, \mathcal{D}_u; \lambda_{\mathrm{semi}}, \lambda_{\mathrm{pxl}}) =
-              \mathcal{L}_{\mathrm{sup}}(\mathcal{D}_l) + \lambda_{\mathrm{semi}}\cdot\mathcal{L}_{\mathrm{semi}}(\mathcal{D}_u)
-              + \lambda_{\mathrm{pxl}}\cdot\mathcal{L}_{\mathrm{pxl}}(\mathcal{D}_l \cup \mathcal{D}_u)$$
-            </div>
+            <div class="eq-block">$$\mathcal{J}(\theta; \mathcal{D}_l, \mathcal{D}_u; \lambda_{\mathrm{semi}}, \lambda_{\mathrm{pxl}}) = \mathcal{L}_{\mathrm{sup}}(\mathcal{D}_l) + \lambda_{\mathrm{semi}}\cdot\mathcal{L}_{\mathrm{semi}}(\mathcal{D}_u) + \lambda_{\mathrm{pxl}}\cdot\mathcal{L}_{\mathrm{pxl}}(\mathcal{D}_l \cup \mathcal{D}_u)$$</div>
 
             <p>
               Where \(\mathcal{L}_{\mathrm{sup}}\) enforces ground-truth supervision on labeled data,
@@ -1544,15 +1540,16 @@
   <script data-goatcounter="https://pardistaghavi.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <script src="static/js/katex.min.js?v=3"></script>
+  <script src="static/js/katex-auto-render.min.js?v=3"></script>
   <script>
     (function () {
-      function typesetMath() {
-        if (typeof renderMathInElement !== "function") return false;
+      function typesetWithKatex() {
+        if (typeof renderMathInElement !== "function" || typeof katex === "undefined") return false;
         renderMathInElement(document.body, {
           delimiters: [
             {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
             {left: "\\(", right: "\\)", display: false}
           ],
           throwOnError: false,
@@ -1560,11 +1557,32 @@
         });
         return true;
       }
+      function typesetWithMathJaxFallback() {
+        if (document.querySelector(".katex")) return; // already rendered
+        var s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js";
+        s.async = true;
+        window.MathJax = {
+          tex: {
+            inlineMath: [["\\(", "\\)"]],
+            displayMath: [["$$", "$$"], ["\\[", "\\]"]]
+          },
+          startup: { typeset: true }
+        };
+        document.head.appendChild(s);
+      }
       function run() {
-        if (typesetMath()) return;
+        if (typesetWithKatex()) return;
         var tries = 0;
         var timer = setInterval(function () {
-          if (typesetMath() || ++tries > 40) clearInterval(timer);
+          if (typesetWithKatex()) {
+            clearInterval(timer);
+            return;
+          }
+          if (++tries > 40) {
+            clearInterval(timer);
+            typesetWithMathJaxFallback();
+          }
         }, 50);
       }
       if (document.readyState === "loading") {
