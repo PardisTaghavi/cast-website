@@ -442,34 +442,70 @@
     .stage-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin: 1.5rem 0;
+      gap: 0.85rem;
+      margin: 1.25rem 0;
     }
     .stage-card {
       background: var(--color-stage-card-bg);
       border: 1px solid var(--color-stage-card-border);
       border-top: 4px solid var(--color-primary);
       border-radius: 6px;
-      padding: 1.2rem;
+      padding: 1rem 1.05rem 1.1rem;
+      text-align: left;
     }
     .stage-card h4 {
-      color: var(--color-primary);
+      color: var(--color-text);
+      font-family: var(--font-display);
       font-weight: 700;
-      margin: 0 0 0.4rem 0;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      margin: 0 0 0.55rem 0;
+      text-align: left;
     }
     .stage-card .stage-num {
       display: inline-block;
       background: var(--color-primary);
       color: var(--color-on-primary);
+      font-family: var(--font-display);
       font-weight: 800;
-      width: 1.6rem; height: 1.6rem;
-      line-height: 1.6rem;
+      width: 1.55rem; height: 1.55rem;
+      line-height: 1.55rem;
       text-align: center;
       border-radius: 50%;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       margin-right: 0.4rem;
+      vertical-align: middle;
     }
-    .stage-card p { font-size: 0.92rem; color: var(--color-text); margin: 0.2rem 0 0 0; }
+    .stage-card p {
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 400;
+      line-height: 1.45;
+      letter-spacing: 0;
+      word-spacing: normal;
+      text-align: left;
+      text-wrap: pretty;
+      color: var(--color-text);
+      margin: 0;
+    }
+    [data-theme="dark"] .stage-card h4,
+    [data-theme="dark"] .stage-card p {
+      color: #ffffff;
+    }
+    .stage-card code {
+      font-size: 0.88em;
+      letter-spacing: 0;
+    }
+    .insight-em {
+      font-style: normal;
+      font-weight: 600;
+      text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 0.16em;
+      text-decoration-color: currentColor;
+      color: inherit;
+    }
     @media (max-width: 768px) {
       .stage-grid { grid-template-columns: 1fr; }
     }
@@ -832,7 +868,7 @@
 
             <p>
               A <strong>key insight</strong>: the same contrastive objective is maintained across both
-              <em>teacher adaptation</em> and <em>student distillation</em>, aligning teacher and student
+              <span class="insight-em">teacher adaptation</span> and <span class="insight-em">student distillation</span>, aligning teacher and student
               embeddings in a shared instance-aware feature space.
             </p>
           </div>
