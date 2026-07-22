@@ -68,7 +68,7 @@
   <link rel="stylesheet" href="static/css/bulma-slider.min.css">
   <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLso7kb1qOAh4DjJTqrKk0YuVxWbmEE5jKOi8aM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
   <link rel="stylesheet" href="static/css/index.css">
 
   <style>
@@ -568,25 +568,44 @@
       color: #ffffff !important;
     }
 
-    /* TL;DR: editorial reading face for the summary block */
-    #tldr .tldr-body {
+    /* Reading body: Source Serif 4 for prose sections (keep Outfit for UI/cards) */
+    .content.has-text-justified {
       font-family: var(--font-serif);
-      font-size: 1.125rem;
       font-optical-sizing: auto;
-      line-height: 1.75;
+      font-size: 1.05rem;
+      line-height: 1.7;
       letter-spacing: 0.005em;
       color: var(--color-text);
     }
-    #tldr .tldr-body p { margin-bottom: 1.15em; }
-    #tldr .tldr-body strong,
-    #tldr .tldr-body b {
+    .content.has-text-justified p,
+    .content.has-text-justified li {
+      font-family: var(--font-serif);
+      color: var(--color-text);
+    }
+    .content.has-text-justified strong,
+    .content.has-text-justified b {
       color: var(--color-text);
       font-weight: 700;
       font-family: var(--font-serif);
     }
-    #tldr .tldr-body em {
+    .content.has-text-justified em {
       color: var(--color-text);
       font-style: italic;
+    }
+    /* TL;DR slightly larger as the hero summary */
+    #tldr .tldr-body {
+      font-size: 1.125rem;
+      line-height: 1.75;
+    }
+    #tldr .tldr-body p { margin-bottom: 1.15em; }
+    /* Stage cards / tables stay Outfit for denser UI text */
+    .content.has-text-justified .stage-card,
+    .content.has-text-justified .stage-card p,
+    .content.has-text-justified .stage-card h4,
+    .content.has-text-justified .results-table,
+    .content.has-text-justified .results-table td,
+    .content.has-text-justified .results-table th {
+      font-family: var(--font-sans);
     }
 
     /* Make sure ALL text content picks up themed colors */
@@ -939,17 +958,17 @@
             <h3 class="title is-5" style="color: var(--color-primary); margin-top: 1.4rem;">Theoretical insight</h3>
             <p>
               Under a mild <em>negative-sampling guarantee</em> that the probability a sampled negative
-              is a true inter-instance pixel satisfies \(p &gt; 0.5\):
+              is a true inter-instance pixel satisfies \(p \gt 0.5\):
             </p>
             <div class="eq-block prop-block">
               <strong>Proposition 3.1 (Expected Margin Growth).</strong>
               One gradient update on \(\mathcal{L}_{\mathrm{pxl}}\) increases the expected inter-instance margin
-              \(\Delta_{\mathrm{emp}}\) by \(\varepsilon = \Theta(p \cdot \lambda_{\mathrm{pxl}}) &gt; 0\).
+              \(\Delta_{\mathrm{emp}}\) by \(\varepsilon = \Theta(p \cdot \lambda_{\mathrm{pxl}}) \gt 0\).
             </div>
             <p>
               This expectation holds <strong>even when pseudo-labels are imperfect</strong>, provided
               negatives are sampled by our instance-aware strategy. Empirically we observe
-              \(p &gt; 0.9\) and an approximately linear increase of \(\Delta_{\mathrm{emp}}\)
+              \(p \gt 0.9\) and an approximately linear increase of \(\Delta_{\mathrm{emp}}\)
               with \(\lambda_{\mathrm{pxl}}\).
             </p>
           </div>
@@ -969,7 +988,7 @@
               We monitor the empirical margin \(\Delta_{\mathrm{emp}} = \mathrm{NegMean} - \mathrm{PosMean}\) and the
               false-negative rate (FNR, where \(p = 1 - \mathrm{FNR}\)) every 10k iterations on Cityscapes.
               The negative-sampling guarantee is satisfied with a wide margin:
-              \(p &gt; 0.9\) throughout training, and the margin grows
+              \(p \gt 0.9\) throughout training, and the margin grows
               approximately linearly with \(\lambda_{\mathrm{pxl}}\) &mdash; consistent with
               Proposition&nbsp;3.1.
             </p>
@@ -1400,7 +1419,7 @@
               <strong>surpassing</strong> the adapted teacher by <strong>+3.4 maskAP on Cityscapes</strong>
               and <strong>+1.5 maskAP on ADE20K</strong>. The instance-aware negative-sampling scheme
               has a theoretical guarantee on the expected inter-instance margin
-              (Proposition&nbsp;3.1) and is empirically validated with \(p &gt; 0.9\) throughout
+              (Proposition&nbsp;3.1) and is empirically validated with \(p \gt 0.9\) throughout
               training.
             </p>
             <p>
@@ -1525,19 +1544,35 @@
   <script data-goatcounter="https://pardistaghavi.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
 
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-FvTRiDTZ9oYpnuohWTRTmKHyvsivFoaJmJlS/kGwSpafUeR2gPFWgjUvEApeCzmI" crossorigin="anonymous"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43g75JRHym+4HLdENqHzbix1mYLeK7sa1vOPPlsahnpFxdtC8ZjlnFwqotZJyHOa" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      if (typeof renderMathInElement !== "function") return;
-      renderMathInElement(document.body, {
-        delimiters: [
-          {left: "$$", right: "$$", display: true},
-          {left: "\\(", right: "\\)", display: false}
-        ],
-        throwOnError: false
-      });
-    });
+    (function () {
+      function typesetMath() {
+        if (typeof renderMathInElement !== "function") return false;
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\(", right: "\\)", display: false}
+          ],
+          throwOnError: false,
+          strict: "ignore"
+        });
+        return true;
+      }
+      function run() {
+        if (typesetMath()) return;
+        var tries = 0;
+        var timer = setInterval(function () {
+          if (typesetMath() || ++tries > 40) clearInterval(timer);
+        }, 50);
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", run);
+      } else {
+        run();
+      }
+    })();
   </script>
 
 </body>
